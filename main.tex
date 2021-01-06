@@ -10,6 +10,9 @@
 \usepackage{minted}
 \usepackage{scalerel}
 \usepackage{multicol}
+\usepackage[colorlinks = true,
+            linkcolor = black,
+            urlcolor  = blue]{hyperref}
 \usepackage[colorinlistoftodos]{todonotes}
 \usepackage[
 backend=biber,
@@ -21,7 +24,7 @@ sorting=none
 
 \title{ECE532S Digital Systems Design \\ \vspace{0.4cm}
        \Large Tutorial 2 - Creating a Simple MicroBlaze Project \\ \vspace{0.4cm}
-       \small Last Updated: July, 2019}
+       \small Last Updated: Jan, 2021}
 \author{ }
 \date{ }
 
@@ -32,7 +35,7 @@ sorting=none
 
 \textit{Soft processors}, such as MicroBlaze, are implemented using programmable logic (FPGA LUTs and registers) and can be custom configured to suit the software application they run. In contrast, \textit{hard processors}, such as the Intel i7 CPU, are implemented as application-specific integrated circuits (ASICs), and their functions are fixed after manufacture. Soft processors are common in embedded systems built with FPGAs, and they usually provide high-level control logic for the system. They can be quickly and easily programmed with a C-based language, and have the advantage of customization. For example, the user can choose between various instruction and data caches, as well as choose to include custom instructions for faster execution of an application. In short, a \textit{soft processor} is a parameterizable processor core that can be built within the logic of an FPGA. 
 
-In this tutorial, we will build a simple MicroBlaze-based soft-processor system on the Nexsys DDR FPGA. The MicroBlaze system we build will be composed of the following Xilinx IP:
+In this tutorial, we will build a simple MicroBlaze-based soft-processor system on the Nexys DDR FPGA. The MicroBlaze system we build will be composed of the following Xilinx IP:
 
 \begin{multicols}{2}
 \begin{itemize}
@@ -55,13 +58,13 @@ These are the basic building blocks used in a typical MicroBlaze system. In addi
 
 \section{Creating a Vivado Project with a Block Design}
 \label{sec:create_proj}
-Invoke the Vivado IDE to create a new project as described in Tutorial 1. From the \textit{Getting Started} page, select \textbf{Create New Project}. In the \textit{Project Name} dialog box, type the project name and location; make sure to choose a directory to which you extracted the contents of the provided \textit{zip} file for this tutorial. In the \textit{Project Type} dialog box, select \textbf{RTL Project}. In the \textit{Add Sources} dialog box, ensure that the Target language is set to \textbf{Verilog}; we don't have any source to add to this project. In the \textit{Add Constrains and Add Existing IP} dialog box make sure to \textbf{Add} the \textit{microblaze.xdc} constraints file included in the tutorial \textit{zip} file. Choose \textbf{xc7a100tcsg324-1} in the \textit{Default Part} dialog box. Click \textbf{Finish} to finish creating the project.
+Invoke the Vivado IDE to create a new project as described in Tutorial 1. From the \textit{Getting Started} page, select \textbf{Create New Project}. In the \textit{Project Name} dialog box, type the project name and location; make sure to choose a directory to which you extracted the contents of the provided \textit{zip} file for this tutorial. In the \textit{Project Type} dialog box, select \textbf{RTL Project}. In the \textit{Add Sources} dialog box, ensure that the Target language is set to \textbf{Verilog}; we don't have any source to add to this project. In the \textit{Add Constrains and Add Existing IP} dialog box make sure to \textbf{Add} the \textit{microblaze.xdc} constraints file included in the tutorial \textit{zip} file. Choose \textbf{xc7a100tcsg324-1} in the \textit{Default Part} dialog box if using the Nexys DDR board (see tutorial 1 for how to change the project to use the Nexys Video board instead). Click \textbf{Finish} to finish creating the project.
 
 Next, we will create a new \textit{Block Diagram} for our MicroBlaze system. Select \textbf{Create Block Design} under the \textit{IP Integrator} section of the \textit{Flow Navigator} pane. Specify any design name and click \textbf{OK} to finish the creation of the block diagram. Once the block design has been created, you should see the interface presented in Figure~\ref{fig:block_design_blank}. Block Designs are an alternate way to design a hardware system in the Vivado IDE, presenting a graphical interface where various IPs and Verilog source files can be connected using \textit{click-and-drag} motions rather than typing out the connectivity in the Verilog code. Note, block diagrams are used by Vivado to generate Verilog.
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.9\textwidth]{images/block_design_blank.png}
+    \includegraphics[width=0.95\textwidth]{images/block_design_blank.png}
     \caption{The Block Design editor view}
     \label{fig:block_design_blank}
 \end{figure}
@@ -77,14 +80,14 @@ button, either on the toolbar above the block diagram or in the middle of the bl
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.9\textwidth]{images/just_mb.png}
+    \includegraphics[width=0.95\textwidth]{images/just_mb.png}
     \caption{The Block Design with the newly added MicroBlaze IP}
     \label{fig:just_mb}
 \end{figure}
 
 \begin{figure}[!h]
     \centering
-    \includegraphics[width=0.9\textwidth]{images/block_auto.png}
+    \includegraphics[width=0.95\textwidth]{images/block_auto.png}
     \caption{Block Automation wizard for the MicroBlaze IP}
     \label{fig:block_auto}
 \end{figure}
@@ -97,18 +100,18 @@ Once you run Block Automation, you should have a number of IP Cores in your bloc
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=\textwidth]{images/block_design_mb.png}
+    \includegraphics[width=0.95\textwidth]{images/block_design_mb.png}
     \caption{The Block Design after Block Automation}
     \label{fig:block_design_mb}
 \end{figure}
 
-The \textit{Block Automation} also added both program and data memory. To see this memory, note the block that was added called \textit{microblaze\_0\_local\_memory} (or something similar). This block isn't actually an IP Core (note the different colour of the block), but a level of hierarchy instantiated in our block design. \textbf{Click} the plus in the corner of this block, or \textbf{double-click} the block, to view the contents of this level of hierarchy. There are a couple of IP Cores here that facilitate access to some local memory for the MicroBlaze. The MicroBlaze uses an interface called \textit{Local Memory Bus}, that needs to be decoded by an \textit{LMB BRAM} controller in order to access the contents of a Block RAM (BRAM) component. BRAMs are a form of memory available on Xilinx FPGAs. Note, the Data and Instructions paths are connected to the same block memory, so they share the same memory space; if you wanted the data and instruction paths to be in different memory spaces, you could add a separate BRAM in this hierarchy.
+The \textit{Block Automation} also added both program and data memory. To see this memory, note the block that was added called \textit{microblaze\_0\_local\_memory} (or something similar). This block isn't actually an IP Core (note the different colour of the block), but a level of hierarchy instantiated in our block design. \textbf{Click} the plus in the corner of this block, or \textbf{double-click} the block, to view the contents of this level of hierarchy. There are a couple of IP Cores here that facilitate access to some local memory for the MicroBlaze. The MicroBlaze uses an interface called \textit{Local Memory Bus}, that needs to be decoded by an \textit{LMB BRAM} controller in order to access the contents of a Block RAM (BRAM) component. BRAMs are a form of memory available on Xilinx FPGAs. The Data and Instruction paths are connected to the same block memory, so they share the same memory space; if you wanted the data and instruction paths to be in different memory spaces, you could add a separate BRAM in this hierarchy.
 
 Finally, \textit{Block Automation} also adds IP Cores to handle the clocks and resets in the system. The \textit{Clock Wizard} IP Core takes a clock from one of the pins of the FPGA and can generate one or more clocks to be used within the FPGA; in our case, a single 100MHz clock is generated for the MicroBlaze and all of the peripherals. The \textit{Processor System Reset} generates separate reset signals for the processor, the peripherals, and the interconnect, according to the AXI standard. We need to make some changes to the clocking configuration, so \textbf{Double click} the \textit{Clocking Wizard} and scroll to the bottom of the first tab. Change the \textit{Source} of the \textit{Primary} input clock to \textbf{Single ended clock capable pin}; the clock supplied to the FPGA will use a single wire instead of a differential signal requiring two wires, which is more often used for very high speed clocks. In the \textit{Output Clocks} tab, change the \textit{Reset Type} to \textbf{Active Low} and Press \textbf{OK}. See Figure~\ref{fig:customize_clock} for reference.
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=\textwidth]{images/customize_clock.png}
+    \includegraphics[width=0.95\textwidth]{images/customize_clock.png}
     \caption{Clocking Wizard block customization interface}
     \label{fig:customize_clock}
 \end{figure}
@@ -118,12 +121,12 @@ The last step we need to do in order to make this a fully functional system is t
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.9\textwidth]{images/conn_auto_clock.png}
+    \includegraphics[width=0.8\textwidth]{images/conn_auto_clock.png}
     \caption{Connection automation for the clocking wizard}
     \label{fig:conn_auto_clock}
 \end{figure}
 
-The \textit{Connection Automation} should have added two input ports to the design, a clock and a reset port. These ports were automatically connected to the clocking wizard. As a final step, \textbf{click} on the \textit{ext\_reset\_n} signal on the \textit{Process System Reset} IP core when the \textit{pen-like} cursor~(\scalerel*{\includegraphics{images/connect_pen.png}}{(}) appears and \textbf{drag} the cursor to the newly created reset signal; this will connect the \textit{ext\_reset\_n} signal to the same reset pin we just created. Note, if we had chosen to do \textit{Connection Automation} for the \textit{ext\_reset\_n} signal, it would have created a separate external pin (we want only a signal external reset). We should now have two ports connected to our design as in Figure~\ref{fig:added_reset_conns}.
+The \textit{Connection Automation} should have added two input ports to the design, a clock and a reset port. These ports were automatically connected to the clocking wizard. As a final step, \textbf{click} on the \textit{ext\_reset\_n} signal on the \textit{Process System Reset} IP core when the \textit{pen-like} cursor~(\scalerel*{\includegraphics{images/connect_pen.png}}{(}) appears and \textbf{drag} the cursor to the newly created reset signal; this will connect the \textit{ext\_reset\_n} signal to the same reset pin we just created. Note, if we had chosen to do \textit{Connection Automation} for the \textit{ext\_reset\_n} signal, it would have created a separate external pin (we want only a single external reset). We should now have two ports connected to our design as in Figure~\ref{fig:added_reset_conns}.
 
 \begin{figure}[h]
     \centering
@@ -143,12 +146,12 @@ To connect to the LEDs and switches, we need to add AXI GPIO IP cores. GPIO stan
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.5\textwidth]{images/gpio_prop.png}
+    \includegraphics[width=0.58\textwidth]{images/gpio_prop.png}
     \caption{The AXI GPIO block properties window}
     \label{fig:gpio_prop}
 \end{figure}
 
-\begin{figure}[!h]
+\begin{figure}[!b]
     \centering
     \includegraphics[width=0.9\textwidth]{images/gpio_config.png}
     \caption{The AXI GPIO configuration window}
@@ -188,7 +191,7 @@ An important step in any MicroBlaze system design process is to set the memory-m
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.9\textwidth]{images/address_map.png}
+    \includegraphics[width=0.95\textwidth]{images/address_map.png}
     \caption{The address map for the data and instruction ports of the MicroBlaze}
     \label{fig:address_map}
 \end{figure}
@@ -203,11 +206,11 @@ on the top toolbar in Vivado. If validation is successful, click \textbf{OK}, ot
 \section{Creating a Wrapper and Adding Constraints}
 \label{sec:wrap_cons}
 
-In order to use a block design in our project, we have to create an HDL wrapper which instantiates an instance of our block design. The block design itself cannot be the top level module of the project. In the \textit{Sources} pane, click \textbf{Design Sources}. \textbf{Right click} your block design and choose \textbf{Create HDL Wrapper} to wrap your design. A dialog box pops up with some options for the HDL wrapper; the default options are okay, so simply click \textbf{OK}. See Figure~\ref{fig:create_wrapper} for reference. Navigate through the hierarchy of the design in the Hierarchy tab. You will notice that a top-level verilog file was created. As the design flow continues, HDL files will be generated for each block in the IP Integrator design.
+In order to use a block design in our project, we have to create an HDL wrapper which instantiates an instance of our block design. The block design itself cannot be the top level module of the project. In the \textit{Sources} pane, click \textbf{Design Sources}. \textbf{Right click} your block design and choose \textbf{Create HDL Wrapper} to wrap your design. A dialog box pops up with some options for the HDL wrapper; the default option is okay, so simply click \textbf{OK}. See Figure~\ref{fig:create_wrapper} for reference. Navigate through the hierarchy of the design in the Hierarchy tab. You will notice that a top-level verilog file was created. As the design flow continues, HDL files will be generated for each block in the IP Integrator design.
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.7\textwidth]{images/create_wrapper.png}
+    \includegraphics[width=0.68\textwidth]{images/create_wrapper.png}
     \caption{Create HDL wrapper dialog box}
     \label{fig:create_wrapper}
 \end{figure}
@@ -255,15 +258,14 @@ set_property -dict { PACKAGE_PIN D4    IOSTANDARD LVCMOS33 } [get_ports { uart_r
 
 
 
-\newpage
 \section{Hello World Program in Vivado SDK}
 \label{sec:hello_sdk}
 
 After generating the bitstream, click on \textbf{File} and choose \textbf{Export}, then choose \textbf{Export Hardware}. Make sure you check \textbf{Include bitstream} (see Figure~\ref{fig:export_hw}). If the option is gray, make sure to click \textbf{Open Implemented Design} under the \textit{Implementation} section of the \textit{Flow Navigator} and repeat the export step. Then, click \textbf{File} and select \textbf{Launch SDK}, which will launch the Vivado SDK program. Note, Vivado SDK can take some time to load the hardware, so be patient.
 
-\begin{figure}[h]
+\begin{figure}[!b]
     \centering
-    \includegraphics[width=0.4\textwidth]{images/export_hw.png}
+    \includegraphics[width=0.45\textwidth]{images/export_hw.png}
     \caption{Export hardware with include bitstream checked}
     \label{fig:export_hw}
 \end{figure}
@@ -272,27 +274,44 @@ After the SDK first launches, double click \textbf{system.hdf} to see the inform
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.9\textwidth]{images/export_hdf.png}
+    \includegraphics[width=0.95\textwidth]{images/export_hdf.png}
     \caption{Export hardware in Vivado SDK}
     \label{fig:export_hdf}
 \end{figure}
 
 Vivado SDK provides some template programs to help us get started with programming for the MicroBlaze system. We will be creating a \textit{Hello World} application. Select \textbf{File $\rightarrow$ New $\rightarrow$ Application Project}. Enter some \textbf{Project name} and choose the \textit{OS Platform} to be \textbf{standalone}. Click \textbf{Next}. Choose \textbf{Hello World} as your template and click \textbf{Finish}. See Figure~\ref{fig:new_app_hello} for reference.
 
-\begin{figure}[h]
+\begin{figure}[!h]
     \centering
-    \includegraphics[width=0.7\textwidth]{images/new_app_hello.png}
+    \includegraphics[width=0.60\textwidth]{images/new_app_hello.png}
     \caption{Creating a new application in Vivado SDK}
     \label{fig:new_app_hello}
 \end{figure}
 
-
-The created application is opened in the Vivado SDK IDE, with a listing of source and include files on the left hand side. expand both the new application folder, and the folder with ending \textit{\_bsp} to see the folder structure of the application. In the \textit{src} folder of your application directory, you should now see a file called \textit{helloworld.c}, along with files called \textit{platform.c}, \textit{platform.h}, and \textit{platform\_config.h}. The main function is defined in the \textit{helloworld.c} file, so \textbf{double click} that file to open it up and view the contents. You should see a program which calls functions \textit{init\_platform()} and \textit{cleanup\_platform()} at the beginning and end of the program, with some functionality included within. These two functions are defined in the \textit{platform.c} file, and call other functions that themselves are defined in the \textit{platform.c} file, or perhaps in some include files from the aforementioned \textit{\_bsp} directory. The \textit{\_bsp} directory, which stands for \textit{Board Support Package}, contains drivers for the peripherals included in your design and some common Xilinx functionalities. You may want to take a look at some of these files if you're curious. These two functions setup the platform for us to use and should always be included in any project.
-
 \newpage
-\textbf{Connect} your board to the computer and turn it on. Click \textbf{Xilinx Tools $\rightarrow$ Program FPGA} to program your board with the generated bitstream. If you have multiple boards connected, make sure to select the correct board by clicking \textbf{Select...} beside the \textit{Device} field, otherwise the \textbf{Auto Detect} option should be fine. The bitstream should be automatically selected in this window. Click \textbf{Program} to start programming the board. See Figure~\ref{fig:program_fpga} for reference. Note, this will program the board with the MicroBlaze system we created.
+The created application is opened in the Vivado SDK IDE, with a listing of source and include files on the left hand side. expand both the new application folder, and the folder with ending \textit{\_bsp} to see the folder structure of the application. In the \textit{src} folder of your application directory, you should now see a file called \textit{helloworld.c}, along with files called \textit{platform.c}, \textit{platform.h}, and \textit{platform\_config.h}. The main function is defined in the \textit{helloworld.c} file, so \textbf{double click} that file to open it up and view the contents. You should see a program which calls functions \textit{init\_platform()} and \textit{cleanup\_platform()} at the beginning and end of the program, with some functionality included within. These two functions are defined in the \textit{platform.c} file, and call other functions that themselves are defined in the \textit{platform.c} file, or perhaps in some include files from the aforementioned \textit{bsp} directory. These two functions setup the platform for us to use and should always be included in any project.
 
-\begin{figure}[h]
+The \textit{bsp} directory, which stands for \textit{Board Support Package}, contains drivers for the peripherals included in your design and some common Xilinx functionalities. In the \textit{bsp} directory, you should see a file called \textit{system.mss}, double click that file to open it. This file describes how your program should interact with the board and the peripherals you've instantiated. One area of particular use is the section titled \textit{Peripheral Drivers}, which lists the peripherals you've added to the system and what drivers (if any) can be used to access those peripherals. The \textit{Documentation} and \textit{Examples} links beside each driver can be useful if you are using a new device and need to learn how to access that device through the driver. See Figure~\ref{fig:driver_list} for reference.
+
+\begin{figure}[!h]
+    \centering
+    \includegraphics[width=0.83\textwidth]{images/driver_list.png}
+    \caption{The system.mss listing of drivers and their documentation/examples}
+    \label{fig:driver_list}
+\end{figure}
+
+Also, at the top of the \textit{system.mss} window are two buttons. The \textit{Modify this BSP's Settings} button can be used to update some system settings for the application, such as what Xilinx libraries to include (some of these libraries may be useful for your project) and how to handle stdout/stdin. By default, the BSP should already be setup for stdout/stdin to be handled by our connected UARTLite. Figure~\ref{fig:bsp_settings} shows the DSP Settings window opened to the \textit{Configuration for OS} page, indicating that the \textit{axi\_uartlite\_0} is to be used for stdin/stdout; If you'd like to use the UART for some other functionality, this can be modified to some other stdin/stdout capable device (Note, the MicroBlaze Debug Module can be configured to do stdin/stdout if need be, but this is left as an exercise outside this tutorial). If you click \textbf{OK} on this settings screen, the contents of the \textit{bsp} directory will be refreshed. The second button, \textit{Re-generate BSP Sources} will also refresh the directory. Refreshing the directory can be useful if you think the BSP folder may be out of date (e.g. if you updated your Block Diagram with a new peripheral).
+
+\begin{figure}[!b]
+    \centering
+    \includegraphics[width=0.87\textwidth]{images/bsp_settings.png}
+    \caption{The BSP settings window dialog}
+    \label{fig:bsp_settings}
+\end{figure}
+
+\textbf{Connect} your board to the computer and turn it on. Click \textbf{Xilinx $\rightarrow$ Program FPGA} to program your board with the generated bitstream. If you have multiple boards connected, make sure to select the correct board by clicking \textbf{Select...} beside the \textit{Device} field, otherwise the \textbf{Auto Detect} option should be fine. The bitstream should be automatically selected in this window. Click \textbf{Program} to start programming the board. See Figure~\ref{fig:program_fpga} for reference. Note, this will program the board with the bitstream we created and exported before launching Vivado SDK.
+
+\begin{figure}[!b]
     \centering
     \includegraphics[width=0.68\textwidth]{images/program_fpga.png}
     \caption{The program FPGA dialog in Vivado SDK}
@@ -301,23 +320,22 @@ The created application is opened in the Vivado SDK IDE, with a listing of sourc
 
 To run the application on the board, click on \textbf{Run $\rightarrow$ Run Configurations} to create a new run configuration. Choose \textbf{Xilinx C/C++ application(GDB)} and then click the \textbf{New} button
 (\scalerel*{\includegraphics{images/new_run_button.png}}{(})
-to create a new launch. You should now see the interface depicted in Figure~\ref{fig:new_run_config}. Open the \textbf{Application} tab and click \textbf{Browse} next to the \textit{Project Name} entry box, select your newly created hello world program (based on the name you assigned it earlier). You will notice that the application file is automatically selected under the \textit{Debug} folder. In the \textit{Summary} section above, click the \textbf{checkbox} in the \textit{Download} column of the application. Click \textbf{Apply} to save the run but do not run the application just yet. Click \textbf{Close}.
+to create a new launch. You should now see the interface shown in Figure~\ref{fig:new_run_config}. Open the \textbf{Application} tab and click \textbf{Browse} next to the \textit{Project Name} entry box, select your newly created hello world program (based on the name you assigned it earlier). You will notice that the application file is automatically selected under the \textit{Debug} folder. In the \textit{Summary} section above, click the \textbf{checkbox} in the \textit{Download} column of the application. Click \textbf{Apply} to save the run but do not run the application just yet. Click \textbf{Close}.
 
 \begin{figure}[!h]
     \centering
-    \includegraphics[width=\textwidth]{images/new_run_config.png}
+    \includegraphics[width=0.95\textwidth]{images/new_run_config.png}
     \caption{Creating a new run in Vivado SDK}
     \label{fig:new_run_config}
 \end{figure}
 
-\newpage
 To see the output of the print statements in our program, we must connect to the UART port of the board. To do this, select the \textbf{SDK Terminal} tab in the console window at the bottom of Vivado SDK. Now click the \textbf{Plus} button 
 (\scalerel*{\includegraphics{images/sdk_conn_button.png}}{(})
-to add a new connection. A dialog will pop up to specify the details of the connection (see Figure~\ref{fig:sdk_conn_dialog}). On Windows machines, the \textit{Port} field should be a drop down list containing the terminal devices connected to the computer; \textbf{select} the device corresponding to the board's UART connection. On Linux machines, you must enter the device file name corresponding to the terminal device in this field (e.g. /dev/ttyUSBx where x is the number corresponding to the connection). For Linux, you must add yourself to the \textit{dialout} group before performing this step. Set the \textit{Baud Rate} to \textbf{9600} and click \textbf{OK}. If you don't know the port number of the board, you can try different options until you find the correct one, though be careful not to send characters to some other terminal device attached to your computer. If testing different port numbers, remember to disconnect from the previous port before connecting to a new port. Any output from the UART port of the board will be displayed in this \textit{SDK Terminal} tab.
+to add a new connection. A dialog will pop up to specify the details of the connection (see Figure~\ref{fig:sdk_conn_dialog}). On Windows machines, the \textit{Port} field should be a drop down list containing the terminal devices connected to the computer; \textbf{select} the device corresponding to the board's UART connection. On Linux machines, you must enter the device file name corresponding to the terminal device in this field (e.g. /dev/ttyUSBx where x is the number corresponding to the connection). For Linux, you must add yourself to the \textit{dialout} group before performing this step. Set the \textit{Baud Rate} to \textbf{9600} and click \textbf{OK}. If you don't know the port number of the board, you can try different options until you find the correct one, though be careful not to send characters to some other terminal device attached to your computer. On the DESL machines in the lab, the correct port is usually COM6. If testing different port numbers, remember to disconnect from the previous port before connecting to a new port. Any output from the UART port of the board will be displayed in this \textit{SDK Terminal} tab.
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.4\textwidth]{images/sdk_conn_dialog.png}
+    \includegraphics[width=0.35\textwidth]{images/sdk_conn_dialog.png}
     \caption{New SDK terminal connection dialog}
     \label{fig:sdk_conn_dialog}
 \end{figure}
@@ -330,7 +348,7 @@ Re-open the \textbf{Run Configurations} window and select the run you recently c
 \section{Program to Access the GPIOs}
 \label{sec:prog_gpio}
 
-Open the \textit{helloworld.c} file and modify its contents to match that in Figure~\ref{fig:gpio_app}. This program defines two volatile global pointers to the LED and switch GPIO addresses; accesses to these addresses will access the registers of the AXI GPIO cores in our block design. The macros \textit{XPAR\_GPIO\_LED\_BASEADDR} and \textit{XPAR\_GPIO\_SWITCH\_BASEADDR} are defined in a file called \textit{xparameters.h}, which is found in the \textit{include} folder of the board support package directory. Make sure to check that file to ensure your macros have the same name (if they differ, please change them in the modified \textit{helloworld.c} program to match those given in \textit{xparameters.h}). In this application, the infinite while loop keeps checking the value of the switches and assigns them to the LEDs. This way you can control the LEDs from the switches.
+Open the \textit{helloworld.c} file and modify its contents to match that in Figure~\ref{fig:gpio_app} (also included in the zip file). This program defines two volatile global pointers to the LED and switch GPIO addresses; accesses to these addresses will access the registers of the AXI GPIO cores in our block design. The macros \textit{XPAR\_GPIO\_LED\_BASEADDR} and \textit{XPAR\_GPIO\_SWITCH\_BASEADDR} are defined in a file called \textit{xparameters.h}, which is found in the \textit{include} folder of the board support package directory. Make sure to check that file to ensure your macros have the same name (if they differ, please change them in the modified \textit{helloworld.c} program to match those given in \textit{xparameters.h}). In this application, the infinite while loop keeps checking the value of the switches and assigns them to the LEDs. This way you can control the LEDs from the switches.
 
 \begin{figure}[!h]
 \centering
@@ -350,8 +368,8 @@ breaklines,
 #include "xil_printf.h"
 #include "xparameters.h"
 
-volatile unsigned int* led = (unsigned int*) XPAR_GPIO_LED_BASEADD;
-volatile unsigned int* swt = (unsigned int*) XPAR_GPIO_SWITCH_BASEADD;
+volatile unsigned int* led = (unsigned int*) XPAR_GPIO_LED_BASEADDR;
+volatile unsigned int* swt = (unsigned int*) XPAR_GPIO_SWITCH_BASEADDR;
 
 int main()
 {
@@ -377,18 +395,35 @@ Re-open the \textbf{Run Configurations} window and select the run you recently c
 
 To see this delay, we need to insert some breakpoints. Click \textbf{Run $\rightarrow$ Debug Configurations} to bring up the debug configurations. The run configuration we created earlier should already exist as a debug configuration in this view, \textbf{select it} on the left side and click \textbf{Debug}. A prompt will come up telling you that Vivado SDK will open the \textit{Debug perspective}, click \textbf{Yes}. The window view that appears is the gdb debugger view in Vivado SDK (see Figure~\ref{fig:gdb_view}). Variables and Breakpoints are listed in the pane on the right side, and the program contents and outline are shown in the lower portion of the figure.
 
-\begin{figure}[h]
+\begin{figure}[!b]
     \centering
     \includegraphics[width=\textwidth]{images/gdb_view.png}
     \caption{GDB debugging view in Vivado SDK}
     \label{fig:gdb_view}
 \end{figure}
 
-\newpage
 You can add breakpoints by \textbf{double clicking} to the left of the line of code before which you'd like the program to stop, i.e. in the margins of the code. Insert a breakpoint on line 17 (refer to Figure~\ref{fig:gpio_app}). Press the \textbf{Resume} button
 (\scalerel*{\includegraphics{images/gdb_resume_button.png}}{(})
-to advance the program to the next break (note, if the program didn't break at the beginning of the main function by default, you will have to stop the program first by pressing the \textbf{Stop} button
-\scalerel*{\includegraphics{images/gdb_stop_button.png}}{(}). Change the switch values with the program stopped and observer that the LEDs do not change correspondingly. Click \textbf{Resume} again to see the LED values update again. We can thus confirm that the LED values are indeed being changed by the software running on the MicroBlaze. The GDB debugger is a useful tool to help debug your applications running on the MicroBlaze system.
+to advance the program to the next break (note, if the program didn't break at the beginning of the main function by default, you will have to stop the program first by pressing the \textbf{Pause} button
+\scalerel*{\includegraphics{images/gdb_pause_button.png}}{(}). Change the switch values with the program stopped and observer that the LEDs do not change correspondingly. Click \textbf{Resume} again to see the LED values update again. We can thus confirm that the LED values are indeed being changed by the software running on the MicroBlaze. The GDB debugger is a useful tool to help debug your applications running on the MicroBlaze system.
+
+To exit the debugger, first press the \textbf{Stop} button (\scalerel*{\includegraphics{images/gdb_stop_button.png}}{(}) to stop the program run and disconnect from the session. To exit the debug interface, note that the \textbf{Debug} view (\scalerel*{\includegraphics{images/gdb_debug_view.png}}{(}) is selected in the top-right corner of the Vivado SDK window; select the \textbf{C/C++} view (\scalerel*{\includegraphics{images/gdb_edit_view.png}}{(}) to return to the editor. Whenever a debug session is run, Vivado will again transfer to the \textit{Debug} view.
+
+
+
+\section{XSCT Console}
+Another useful tool within Vivado SDK to interface with your MicroBlaze project is the Xilinx Software Command-Line Tool, or the \textit{XSCT Console} for short. The \textit{XSCT Console} allows you to interact with your processor system from Vivado SDK through the Debug module you instantiated in your system. To launch the \textit{XSCT Console} from Vivado SDK Click \textbf{Xilinx $\rightarrow$ XSCT Console}. The Console Window should open in the bottom left area of Vivado SDK. See Figure~\ref{fig:xsct_console} for reference.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/xsct_console.png}
+    \caption{XSCT console view}
+    \label{fig:xsct_console}
+\end{figure}
+
+To connect to the processor system on the FPGA, type the command \textit{connect} and press \textbf{Enter}. Note, This connection will close every time the FPGA is re-programmed or some \textit{Run-} or \textit{Debug-Configuration} is run on the board, so you may need to re-enter the \textit{connect} command after those events. Once you've connected to your MicroBlaze Debug module, there are a number of commands you can run to interact with the system. For a list of commands and how to use them, see the \href{https://www.xilinx.com/html_docs/xilinx2019_1/SDK_Doc/xsct/intro/xsct_commands.html}{XSCT Documentation}. 
+
+We will not go into detail on any commands in this tutorial, but leave that as an exercise for further exploration. One command that may be useful, and most students should explore, is the \textit{mrd} and \textit{mwr} commands in the \textit{Target Memory} section of the \textit{XSCT Documentation}. These commands allow you to read and write to the processor's memory from Vivado, and even have a \textit{bin} option that allows for reading to a binary file and writing from a binary file to the processor memory. These commands are especially useful if you need to transfer large amounts of data from the computer to the FPGA system, and vice-versa.
 
 
 
